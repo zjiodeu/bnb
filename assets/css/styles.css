@@ -1,0 +1,31 @@
+body {background: #408447}
+.desk {
+    max-height:280px;
+    border : 1px solid white;
+    position: fixed;
+    left:10%;
+    right:10%;
+    display:inline-block;
+}
+#opponent {
+    top : 0;
+}
+#me {
+    bottom:0;
+}
+div.card {
+    color: #000;
+    padding: 20px;
+    float:left;
+    text-align: center;
+}
+
+div.card:hover, .activecard {
+    color : #fff;
+    cursor : pointer;
+    background: #56965D;
+}
+
+div.card > img{
+    display:block;
+}
