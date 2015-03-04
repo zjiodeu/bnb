@@ -19,8 +19,10 @@ div.card {
     float:left;
     text-align: center;
 }
-
-div.card:hover, .activecard {
+div.card:hover {
+    cursor : pointer;
+}
+.active {
     color : #fff;
     cursor : pointer;
     background: #56965D;

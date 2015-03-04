@@ -3,8 +3,26 @@
     var bnb = angular.module('bnb', []),
         PLAYERS = [];
     
-    bnb.controller("gameController", function($scope, $http) {
+    /*bnb.controller("gameController", function($scope, $http) {
         $scope.cards = getRandomCards();
+        $scope.choose = function(id) {
+            var card = $scope.cards[id];
+            card.active = !card.active;
+        }
+    });*/
+    
+    bnb.directive('desk', function () {
+        return {
+            restrict: "E",
+            templateUrl: 'tpl/cards.html',
+            controller: function ($scope) {
+                $scope.cards = getRandomCards();
+                $scope.choose = function (id) {
+                    var card = $scope.cards[id];
+                    card.active = !card.active;
+                }
+            }
+        };
     });
     
     function getRandomCards() {
