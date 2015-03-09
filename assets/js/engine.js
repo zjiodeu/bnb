@@ -4,53 +4,109 @@
         PLAYERS = [],
         ResetLimit = 3;
     
-    bnb.controller("gameController", function($scope, $http) {
-        var card;
-        $scope.cards = getRandomCards();
+    bnb.controller("gameController", function($scope) {      
+        $scope.cards = [];
         $scope.buffer = [];
-        $scope.choose = function(id) {
-            debugger;
-            card = $scope.getCard(id);
-            card.active = !card.active;
-            if (card.active && $scope.buffer.length <= ResetLimit) {
-               $scope.setCard(card); 
+        $scope.init = function() {
+            $scope.cards = getRandomCards();            
+        };
+        $scope.getPos = function(id, context) {
+            var cardSet = $scope[context];
+            if (!(cardSet && cardSet.length)) {
+                throw new Error('Undefined or empty context');
             }
-            else {
-               $scope.deleteCard(card);             
-            }
-            console.log($scope.buffer);
-        }
-        $scope.getCard = function (id) {
-            for (var i = 0; i < $scope.cards.length; ++i) {
-                if ($scope.cards[i].id === id) {
-                    $scope.cards[i].pos = i;
-                    $scope.cards[i].bufferPos = function() {
-                        
-                    }()
-                    return $scope.cards[i];
+            for (var i = 0; i < cardSet.length; ++i) {
+                if (cardSet[i].id === id) {
+                    return i;
                 }
             }
             return false;
         }
         
-        $scope.setCard = function(card) {
+        $scope.send = function() {
+            if (!$scope.buffer.length) {
+                return;
+            }
+            /*send them via websockets*/
+            /*then delete*/
+            angular.forEach($scope.buffer, function(card, key){
+                //debugger;
+                $scope.deleteCard(card.id);
+            });
+            $scope.clearBuffer();
+        }
+        $scope.getCard = function (id) {
+            var pos = $scope.getPos(id, 'cards');
+            if (false === pos || !$scope.cards[pos]) {
+                throw new Error('cannot get the cart. ID:' + id);
+            }
+            return $scope.cards[pos];
+        }
+        $scope.deleteCard = function(id) {
+            var pos = $scope.getPos(id, 'cards');
+            if ($scope.cards[pos]) {
+                $scope.cards.splice(pos, 1);
+            }
+        }
+                
+        $scope.setToBuffer = function(card) {
+           card.inBuffer = true;
            return $scope.buffer.push(card) - 1;
         }
         
-        $scope.deleteCard = function(card) {
-           var target = $scope.getCard(card.id);
-           if (!target) {
-               console.log("card "  + card.id + " has already been deleted");
-               return false;
-           }
-           $scope.buffer.splice(target.pos, 1);
+        $scope.deleteFromBuffer = function(card) {
+            var pos = $scope.getPos(card.id, 'buffer');
+            card.inBuffer = false;
+            $scope.buffer.splice(pos, 1);
+        }
+        
+        $scope.clearBuffer = function() {
+            $scope.buffer = [];
         }
     });
+    
+    bnb.controller('enemyController', function($scope){
+        $scope.cards = [];
+    });
+    
+    bnb.controller('meController', function($scope){
+        $scope.init();
+        
+        $scope.choose = function(id) {
+            var card = $scope.getCard(id);
+            card.active = !card.active;
+            if (card.active) {
+                if ($scope.buffer.length < ResetLimit) {
+                    $scope.setToBuffer(card); 
+                }
+                else {
+                    card.active = !card.active;
+                    return;
+                }
+            }
+            else {
+                $scope.deleteFromBuffer(card);             
+            }
+            console.log($scope.buffer);
+        }
+    });
+    
+    
     
     bnb.directive('desk', function () {
         return {
             restrict: "E",
             templateUrl: 'tpl/cards.html',
+        };
+    });
+    
+    bnb.directive('leftmenu', function () {
+        return {
+            restrict: "E",
+            templateUrl: 'tpl/leftmenu.html',
+            controller : function($scope) {
+                
+            }
         };
     });
     

@@ -1,4 +1,4 @@
-<div ng-repeat="card in cards" class="card" ng-click="choose(card.id)" ng-class="{'active' : card.active}">
+<div ng-repeat="card in cards" class="card" ng-click="choose(card.id)" ng-class="{active: card.inBuffer}">
     <img ng-src="{{card.pic}}"/>
     <span>{{card.name}}</span>
 </div>

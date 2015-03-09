@@ -31,3 +31,9 @@ div.card:hover {
 div.card > img{
     display:block;
 }
+
+nav.menu {
+    width: 150px;
+    height:100%;
+    background:transparent !important;
+}

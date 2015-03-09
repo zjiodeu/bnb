@@ -10,8 +10,9 @@
     <script src="assets/js/engine.js"></script>
     <meta content="">
   </head>
-  <body>
-  <desk id="opponent" class="desk" ng-controller="gameController as cards"></desk>
-  <desk id="me" class="desk" ng-controller="gameController as cards"></desk>
+  <body ng-controller="gameController as game">
+  <leftmenu></leftmenu>
+  <desk id="opponent" class="desk" ng-controller="enemyController"></desk>
+  <desk id="me" class="desk" ng-controller="meController"></desk>
   </body>
 </html>
