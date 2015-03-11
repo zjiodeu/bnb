@@ -1,52 +1,35 @@
 (function(playersNum, DECK, jQuery){
     'use strict';
-    var bnb = angular.module('bnb', []),
+    var bnb = angular.module('bnb', ['ngWebsocket']),
         PLAYERS = [],
         ResetLimit = 3;
     
-    bnb.controller("gameController", function($scope) {      
-        $scope.cards = [];
+    
+    bnb.controller('enemyController', function($scope){
+        //debugger;
+        $scope.cards = getEnemyCards();
+    });
+    
+    bnb.controller('gameController', function($scope, CardHandler){
         $scope.buffer = [];
-        $scope.init = function() {
-            $scope.cards = getRandomCards();            
-        };
-        $scope.getPos = function(id, context) {
-            var cardSet = $scope[context];
-            if (!(cardSet && cardSet.length)) {
-                throw new Error('Undefined or empty context');
-            }
-            for (var i = 0; i < cardSet.length; ++i) {
-                if (cardSet[i].id === id) {
-                    return i;
-                }
-            }
-            return false;
+        $scope.cards = getRandomCards();
+        $scope.clearBuffer = function() {
+            $scope.buffer = [];
         }
         
         $scope.send = function() {
+            debugger;
+            var cHandler;
             if (!$scope.buffer.length) {
                 return;
             }
+            var cHandler = new CardHandler($scope.cards);
             /*send them via websockets*/
             /*then delete*/
-            angular.forEach($scope.buffer, function(card, key){
-                //debugger;
-                $scope.deleteCard(card.id);
+            angular.forEach($scope.buffer, function(card, key){              
+                cHandler.deleteCard(card.id);
             });
             $scope.clearBuffer();
-        }
-        $scope.getCard = function (id) {
-            var pos = $scope.getPos(id, 'cards');
-            if (false === pos || !$scope.cards[pos]) {
-                throw new Error('cannot get the cart. ID:' + id);
-            }
-            return $scope.cards[pos];
-        }
-        $scope.deleteCard = function(id) {
-            var pos = $scope.getPos(id, 'cards');
-            if ($scope.cards[pos]) {
-                $scope.cards.splice(pos, 1);
-            }
         }
                 
         $scope.setToBuffer = function(card) {
@@ -55,25 +38,15 @@
         }
         
         $scope.deleteFromBuffer = function(card) {
-            var pos = $scope.getPos(card.id, 'buffer');
+            var bufferHandler = new CardHandler($scope.buffer);
+            var pos = bufferHandler.getPos(card.id);
             card.inBuffer = false;
             $scope.buffer.splice(pos, 1);
         }
         
-        $scope.clearBuffer = function() {
-            $scope.buffer = [];
-        }
-    });
-    
-    bnb.controller('enemyController', function($scope){
-        $scope.cards = [];
-    });
-    
-    bnb.controller('meController', function($scope){
-        $scope.init();
-        
         $scope.choose = function(id) {
-            var card = $scope.getCard(id);
+            var cHandler = new CardHandler($scope.cards);
+            var card = cHandler.getCard(id);
             card.active = !card.active;
             if (card.active) {
                 if ($scope.buffer.length < ResetLimit) {
@@ -87,9 +60,38 @@
             else {
                 $scope.deleteFromBuffer(card);             
             }
-            console.log($scope.buffer);
         }
     });
+   
+    bnb.factory('CardHandler', function () {
+        return function(cardSet) {    
+            this.getPos = function(id) {
+                if (!(this.cardSet && this.cardSet.length)) {
+                    throw new Error('Undefined or empty context');
+                }
+                for (var i = 0; i < this.cardSet.length; ++i) {
+                    if (this.cardSet[i].id === id) {
+                        return i;
+                    }
+                }
+                return false;
+            },
+            this.getCard = function (id) {
+                var pos = this.getPos(id);
+                if (false === pos || !this.cardSet[pos]) {
+                    throw new Error('cannot get the cart. ID:' + id);
+                }
+                return this.cardSet[pos];
+            },
+            this.deleteCard = function(id) {
+                var pos = this.getPos(id);
+                if (this.cardSet[pos]) {
+                    this.cardSet.splice(pos, 1);
+                }
+            }
+            this.cardSet = cardSet;
+    }
+});
     
     
     
@@ -110,6 +112,40 @@
         };
     });
     
+   /* bnb.run(function ($websocket) {
+        //return;
+        var ws = $websocket.$new('ws://localhost:12345')
+          .$on('$open', function () {
+            console.log('Oh my gosh, websocket is really open! Fukken awesome!');
+
+            var data = {
+                level: 1,
+                text: 'ngWebsocket rocks!',
+                array: ['one', 'two', 'three'],
+                nested: {
+                    level: 2,
+                    deeper: [{
+                        hell: 'yeah'
+                    }, {
+                        so: 'good'
+                    }]
+                }
+            };
+
+            ws.$emit('ping', 'hi listening websocket server') // send a message to the websocket server
+              .$emit('pong', data);
+          })
+          .$on('pong', function (data) {
+            console.log('The websocket server has sent the following data:');
+            console.log(data);
+
+           // ws.$close();
+          })
+          /*.$on('$close', function () {
+            console.log('Noooooooooou, I want to have more fun with ngWebsocket, damn it!');
+          });*/
+   // });
+    
     function getRandomCards() {
         var total = Math.floor(DECK.totalLength / playersNum),
             set = [],
@@ -121,10 +157,27 @@
         return set;
         
     }
-    /*bnb.directive('me', function() {
-        return {
-            restrict : 'E',
-            templateUrl : 'tpl/cards.html'
+    
+    function getEnemyCards() {
+        var count = 26;
+        var set = [];
+        while(count--) {
+            set.push({
+            "id" : 0,
+            "name" : "",
+            "suit" : "",
+            "pic" : "assets/images/cards/back.png"  
+        });
         }
-    });*/
+        return set;
+    }
 })(2,DECK,$);
+    
+    var conn = new WebSocket('ws://localhost:12345');
+    conn.onopen = function(e) {
+        console.log("Connection established!");
+    };
+
+    conn.onmessage = function(e) {
+        console.log(e.data);
+    };
