@@ -1,18 +1,28 @@
-(function(playersNum, DECK, jQuery){
+(function(jQuery, HOST, PORT){
     'use strict';
-    var bnb = angular.module('bnb', ['ngWebsocket']),
+    var bnb = angular.module('bnb', []),
         PLAYERS = [],
-        ResetLimit = 3;
-    
-    
+        ResetLimit = 3,
+        ws = new WS(HOST, PORT);
+        
     bnb.controller('enemyController', function($scope){
         //debugger;
         $scope.cards = getEnemyCards();
     });
     
-    bnb.controller('gameController', function($scope, CardHandler){
+    bnb.controller('gameController', function($scope, $interval, CardHandler){
         $scope.buffer = [];
-        $scope.cards = getRandomCards();
+        $scope.cards = [];
+        var waitDataTimer;
+        if (!angular.isDefined(ws.response)) {
+            waitDataTimer = $interval(function(){
+               // debugger;
+                if (angular.isDefined(ws.response)) {
+                   $scope.cards = ws.response.cards;
+                   $interval.cancel(waitDataTimer); 
+                }
+            }, 100, 50); 
+        }
         $scope.clearBuffer = function() {
             $scope.buffer = [];
         }
@@ -94,7 +104,6 @@
 });
     
     
-    
     bnb.directive('desk', function () {
         return {
             restrict: "E",
@@ -112,49 +121,15 @@
         };
     });
     
-   /* bnb.run(function ($websocket) {
-        //return;
-        var ws = $websocket.$new('ws://localhost:12345')
-          .$on('$open', function () {
-            console.log('Oh my gosh, websocket is really open! Fukken awesome!');
-
-            var data = {
-                level: 1,
-                text: 'ngWebsocket rocks!',
-                array: ['one', 'two', 'three'],
-                nested: {
-                    level: 2,
-                    deeper: [{
-                        hell: 'yeah'
-                    }, {
-                        so: 'good'
-                    }]
-                }
-            };
-
-            ws.$emit('ping', 'hi listening websocket server') // send a message to the websocket server
-              .$emit('pong', data);
-          })
-          .$on('pong', function (data) {
-            console.log('The websocket server has sent the following data:');
-            console.log(data);
-
-           // ws.$close();
-          })
-          /*.$on('$close', function () {
-            console.log('Noooooooooou, I want to have more fun with ngWebsocket, damn it!');
-          });*/
-   // });
-    
     function getRandomCards() {
-        var total = Math.floor(DECK.totalLength / playersNum),
+        /*var total = Math.floor(DECK.totalLength / playersNum),
             set = [],
             random = 0;
         for (var i = 0; i < total; ++i) {
             random = Math.floor(Math.random() * DECK.cards.length);
             set.push(DECK.cards.splice(random,1)[0]);
         }
-        return set;
+        return set;*/
         
     }
     
@@ -171,13 +146,4 @@
         }
         return set;
     }
-})(2,DECK,$);
-    
-    var conn = new WebSocket('ws://localhost:12345');
-    conn.onopen = function(e) {
-        console.log("Connection established!");
-    };
-
-    conn.onmessage = function(e) {
-        console.log(e.data);
-    };
+})($, 'localhost', 12345);

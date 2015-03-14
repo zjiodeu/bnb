@@ -4,17 +4,29 @@ use Ratchet\MessageComponentInterface;
 use Ratchet\ConnectionInterface;
 
 class Bnb implements MessageComponentInterface {
+    
+    const CLIENT_MAX_NUMBER = 2;
+
     protected $clients;
+    
+    protected $cards;
 
     public function __construct() {
         $this->clients = new \SplObjectStorage;
+        $this->cards = new Cards(Bnb::CLIENT_MAX_NUMBER);
     }
 
     public function onOpen(ConnectionInterface $conn) {
-        // Store the new connection to send messages to later
-        $this->clients->attach($conn);
-
-        echo "New connection! ({$conn->resourceId})\n";
+        if (count($this->clients) < Bnb::CLIENT_MAX_NUMBER) {
+            // Store the new connection to send messages to later
+            $this->clients->attach($conn);
+            $submission = $this->_prepareSubmission();
+            $conn->send($submission);
+            //echo "New connection! ({$conn->resourceId})\n";
+        }
+        else {
+            echo "Sorry, game has already started";
+        }
     }
 
     public function onMessage(ConnectionInterface $from, $msg) {
@@ -41,5 +53,13 @@ class Bnb implements MessageComponentInterface {
         echo "An error has occurred: {$e->getMessage()}\n";
 
         $conn->close();
+    }
+    
+    protected function _prepareSubmission() {
+        $data = [
+            'cards' => $this->cards->get(),
+            'totalLength' => Cards::CARDS_LENGTH
+        ];
+        return json_encode($data);
     }
 }
