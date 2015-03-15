@@ -1,11 +1,14 @@
 body {background: #408447}
 .desk {
-    max-height:280px;
+    max-height:420px;
     border : 1px solid white;
     position: fixed;
     left:10%;
     right:10%;
     display:inline-block;
+}
+.desk:empty{ 
+    border: none;
 }
 #opponent {
     top : 0;
@@ -33,7 +36,16 @@ div.card > img{
 }
 
 nav.menu {
-    width: 150px;
+    width: 170px;
     height:100%;
     background:transparent !important;
+}
+nav.menu button {
+    width: 140px;
+    margin: 0 auto;
+    position: fixed;
+}
+#field {
+top: 250px;
+background: rgb(150, 187, 132);
 }
