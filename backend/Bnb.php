@@ -35,10 +35,10 @@ class Bnb implements MessageComponentInterface {
             , $from->resourceId, $msg, $numRecv, $numRecv == 1 ? '' : 's');
 
         foreach ($this->clients as $client) {
-            //if ($from !== $client) {
+            if ($from !== $client) {
                 // The sender is not the receiver, send to each client connected
                 $client->send($msg);
-           // }
+            }
         }
     }
 
@@ -58,7 +58,8 @@ class Bnb implements MessageComponentInterface {
     protected function _prepareSubmission() {
         $data = [
             'cards' => $this->cards->get(),
-            'totalLength' => Cards::CARDS_LENGTH
+            'totalLength' => Cards::CARDS_LENGTH,
+            'type' => 'init'
         ];
         return json_encode($data);
     }

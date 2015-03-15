@@ -13,16 +13,17 @@
     bnb.controller('gameController', function($scope, $interval, CardHandler){
         $scope.buffer = [];
         $scope.cards = [];
-        var waitDataTimer;
-        if (!angular.isDefined(ws.response)) {
-            waitDataTimer = $interval(function(){
-               // debugger;
-                if (angular.isDefined(ws.response)) {
-                   $scope.cards = ws.response.cards;
-                   $interval.cancel(waitDataTimer); 
-                }
-            }, 100, 50); 
-        }
+        $scope.cardsInGame = [];
+        
+        ws.registerObserver('message', function(){
+            if (ws.response.type === 'init') {
+                $scope.cards = ws.response.cards;
+            }
+            if (ws.response.type === 'cardsSent') {
+                $scope.cardsInGame = ws.response.cards;
+            }
+        });
+        
         $scope.clearBuffer = function() {
             $scope.buffer = [];
         }
@@ -33,13 +34,15 @@
             if (!$scope.buffer.length) {
                 return;
             }
-            var cHandler = new CardHandler($scope.cards);
+            var cHandler = new CardHandler($scope.cards),
+                cardsForSending = [];
             /*send them via websockets*/
             /*then delete*/
             angular.forEach($scope.buffer, function(card, key){              
-                cHandler.deleteCard(card.id);
+                cardsForSending.push(cHandler.deleteCard(card.id));
             });
             $scope.clearBuffer();
+            ws.send(cardsForSending);
         }
                 
         $scope.setToBuffer = function(card) {
@@ -95,10 +98,9 @@
             },
             this.deleteCard = function(id) {
                 var pos = this.getPos(id);
-                if (this.cardSet[pos]) {
-                    this.cardSet.splice(pos, 1);
-                }
+                return (this.cardSet[pos]) ? this.cardSet.splice(pos, 1): false;
             }
+            
             this.cardSet = cardSet;
     }
 });
@@ -122,7 +124,7 @@
     });
     
     function getRandomCards() {
-        /*var total = Math.floor(DECK.totalLength / playersNum),
+       /* var total = Math.floor(DECK.totalLength / playersNum),
             set = [],
             random = 0;
         for (var i = 0; i < total; ++i) {

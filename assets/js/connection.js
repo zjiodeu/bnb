@@ -1,14 +1,21 @@
 var WS = (function(){
 'use strict';
-return function(host, port) {
-        var connection = new WebSocket('ws://' + host + ':' + port),
+function Connection(host, port) {
+        var conn = new WebSocket('ws://' + host + ':' + port),
                 scope = this;
-        connection.onopen = function () {
+        this.observers = {
+            'open' : [],
+            'message' : [],
+            'send' : []
+        },
+        conn.onopen = function () {
         };
 
-        connection.onmessage = function (e) {
+        conn.onmessage = function (e) {
             try {
+                debugger;
                 scope.response = JSON.parse(e.data);
+                scope.exec.call(scope, 'message', scope.response);
             }
             catch (e) {
                 console.log(e);
@@ -17,32 +24,52 @@ return function(host, port) {
             finally {
 
             }
-            //console.log(e.data);
+        };
+        this.send = function(data) {
+            try {
+              data = JSON.stringify(data);
+              conn.send(data);
+            }catch(e) {
+                console.log(e);
+                throw new Error('Cannot encode client request');  
+            }
+            finally {
+                
+            }           
         };
     }
-/*var conn = angular.module('Connection', []);
-conn.factory('WS', function () {
-    return function(host, port) {
-            var connection = new WebSocket('ws://' + host + ':' + port),
-                    scope = this;
-            connection.onopen = function () {
-            };
-
-            connection.onmessage = function (e) {
-                try {
-                    scope.response = JSON.parse(e.data);
-                }
-                catch (e) {
-                    console.log(e);
-                    throw new Error('Cannot decode server response');
-                }
-                finally {
-
-                }
-                //console.log(e.data);
-            };
+    Connection.prototype = {
+        
+        registerObserver : function(event,handle) {
+            if (!angular.isDefined(this.observers[event])) {
+                throw new Error('Observer was added to undefined function');
+            }
+            this.observers[event].push(handle);
+            return this;
+        },
+        
+        unregisterObserver : function(event, handle) {
+            if (!angular.isDefined(this.observers[event])) {
+                throw new Error('Try to unsubscribe undefined function');
+            }       
+            this.observers[event] = this.observers[event].filter(function(item){
+                return (item !== handle);
+            });
+            return this;
+        },
+        
+        exec : function(observer, data) {
+            var fnSet = this.observers && this.observers[observer];
+            if (!fnSet) {
+                console.log('No observers registered for ' + observer);
+            }
+            angular.forEach(fnSet, function(fn, key){
+                fn(data);
+            });
         }
-        });
-*/
+        
+    };
+    
+    return Connection;
 })()
 
