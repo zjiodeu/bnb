@@ -1,4 +1,4 @@
-var WS = (function(){
+var WS = (function(jQ){
 'use strict';
 function Connection(host, port) {
         var conn = new WebSocket('ws://' + host + ':' + port),
@@ -25,6 +25,11 @@ function Connection(host, port) {
 
             }
         };
+        socket.onerror = function(error) {
+            alert('get some errors. Look at console');
+            throw new Error(error);
+        };
+
         this.send = function(data) {
             try {
               data = JSON.stringify(data);
@@ -71,5 +76,5 @@ function Connection(host, port) {
     };
     
     return Connection;
-})()
+})($)
 
