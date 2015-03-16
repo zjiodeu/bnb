@@ -1,6 +1,6 @@
 (function(jQuery, HOST, PORT){
     'use strict';
-    var bnb = angular.module('bnb', ['tpl']),
+    var bnb = angular.module('bnb', ['tpl', 'ui.bootstrap']),
         PLAYERS = [],
         ResetLimit = 3,
         ws = new WS(HOST, PORT);
@@ -12,7 +12,6 @@
             if (ws.response.type === 'cardsReceived' && ws.response.cards && ws.response.cards.length) {
                // $scope.cardsInGame = ws.response.cards;
                 $scope.$apply(function(){
-                    debugger;
                     var len = ws.response.cards.length;                   
                     $scope.cards.splice($scope.cards.length - len, len);                   
                });
@@ -34,15 +33,46 @@
         });
     });
     
-    bnb.controller('gameController', function($scope, $interval, CardHandler){
+    bnb.controller('gameController', function($scope, $interval, CardHandler, $modal){
         $scope.buffer = [];
         $scope.cards = [];
-        
+        $scope.notBelieveFlag = false;
+        $scope.cardTypes = [        
+            'ace',
+            'king',
+            'queen',
+            'wallet',
+            'ten',
+            'nine',
+            'eight',
+            'seven',
+            'six',
+            'five',
+            'four',
+            'three',
+            'two'
+        ];
+        $scope.providedCards = $scope.cardTypes[1];
+                
         ws.registerObserver('message', function(){
+            var modalInstance;
             if (ws.response.type === 'init') {
                 $scope.$apply(function(){
-                    $scope.cards = ws.response.cards;                   
+                    $scope.cards = ws.response.cards; 
+                    $modal.close(modalInstance || modalInstance.result);
                 });
+            }
+            else if (ws.response.type === 'cardsReceived') {
+                $scope.notBelieveFlag = true;
+            }
+            else if (ws.response.type === 'waiting') {
+                alert('waiting for another client');
+                    /*var modalInstance = $modal.open({
+                        templateUrl: 'tpl/waiting.html',
+                        size: 'lg',
+                        backdrop : false,
+                        windowTemplateUrl : 'tpl/window.html'
+                    });*/
             }
         });
         
@@ -70,8 +100,13 @@
         }
                 
         $scope.setToBuffer = function(card) {
+           var buflen = 0;
+           buflen = $scope.buffer.push(card) - 1;
+           /*$scope.$apply(function(){
+               buflen = $scope.buffer.push(card) - 1;
+           });*/
            card.inBuffer = true;
-           return $scope.buffer.push(card) - 1;
+           return buflen;
         }
         
         $scope.deleteFromBuffer = function(card) {
@@ -79,6 +114,9 @@
             var pos = bufferHandler.getPos(card.id);
             card.inBuffer = false;
             $scope.buffer.splice(pos, 1);
+            /*$scope.$apply(function(){
+                $scope.buffer.splice(pos, 1);
+            });*/
         }
         
         $scope.choose = function(id) {
@@ -128,19 +166,7 @@
             this.cardSet = cardSet;
     }
 });
-    
-    function getRandomCards() {
-       /* var total = Math.floor(DECK.totalLength / playersNum),
-            set = [],
-            random = 0;
-        for (var i = 0; i < total; ++i) {
-            random = Math.floor(Math.random() * DECK.cards.length);
-            set.push(DECK.cards.splice(random,1)[0]);
-        }
-        return set;*/
-        
-    }
-    
+
     function getEnemyCards() {
         var count = 26;
         var set = [];

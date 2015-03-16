@@ -39,12 +39,14 @@ nav.menu {
     width: 170px;
     height:100%;
     background:transparent !important;
+    position:fixed;
 }
-nav.menu button {
+nav.menu button, nav.menu fieldset {
     width: 140px;
     margin: 0 auto;
     position: fixed;
 }
+
 #field {
 top: 250px;
 background: rgb(150, 187, 132);

@@ -25,9 +25,10 @@ function Connection(host, port) {
 
             }
         };
-        socket.onerror = function(error) {
-            alert('get some errors. Look at console');
-            throw new Error(error);
+        conn.onerror = function(error) {
+            var msg = 'Seems we get some problems with socket server. Try to reboot';
+            alert(msg);
+            throw new Error(msg);
         };
 
         this.send = function(data) {

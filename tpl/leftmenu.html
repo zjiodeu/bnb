@@ -1,10 +1,13 @@
 <nav class="navbar navbar-default navbar-left menu">
   <div class="container">
       <br />
-      <button class="btn btn-default" ng-click="send()">Add selected</button>
+      <fieldset>
+          <select ng-model="providedCards" ng-options="o as o for o in cardTypes" class="form-control"></select>
+          <br />
+      <span>Cards number: {{buffer.length}}</span>
+      </fieldset>
       <br />
-      <br />
-      <br />
-      <button class="btn btn-danger" style="bottom:50px;">I don`t believe you!</button>
+      <button class="btn btn-default" ng-click="send()" style="top:150px;" ng-disabled="!buffer.length">Add selected</button>
+      <button class="btn btn-danger" style="bottom:50px;" ng-disabled="!notBelieveFlag">I don`t believe you!</button>
   </div>
 </nav>

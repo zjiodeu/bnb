@@ -22,8 +22,16 @@ class Bnb implements MessageComponentInterface {
         if (count($this->clients) < Bnb::CLIENT_MAX_NUMBER) {
             // Store the new connection to send messages to later
             $this->clients->attach($conn);
-            $submission = $this->_prepareSubmission();
-            $conn->send($submission);
+            if (count($this->clients) > 1) {
+                foreach ($this->clients as $client) {
+                    $submission = $this->_prepareSubmission();
+                    $client->send($submission);
+                }
+            }
+            else {
+                $waitResponse = $this->_makeClientWaiting();
+                $conn->send($waitResponse);
+            }
             //echo "New connection! ({$conn->resourceId})\n";
         }
         else {
@@ -108,5 +116,12 @@ class Bnb implements MessageComponentInterface {
             return $el;
         },$msgData['cards']);
         return $msgData;
+    }
+    
+    protected function _makeClientWaiting() {
+        $data = [
+            'type' => 'waiting'
+        ];
+        return json_encode($data);
     }
 }
