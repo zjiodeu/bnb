@@ -8,7 +8,7 @@
     bnb.controller('enemyController', function($scope){
         $scope.cards = getEnemyCards();
         ws.registerObserver('message', function(){
-            debugger;
+            //debugger;
             if (ws.response.type === 'cardsReceived' && ws.response.cards && ws.response.cards.length) {
                // $scope.cardsInGame = ws.response.cards;
                 $scope.$apply(function(){
@@ -19,24 +19,39 @@
         });
     });
     
-    bnb.controller('fieldController', function($scope){
+    bnb.controller('fieldController', function($scope, $timeout){
         $scope.cards = [];
+        $scope.clearField = function() {
+            $timeout(function(){
+               $scope.cards = []; 
+            }, 1000);
+        };
         ws.registerObserver('message', function(){
-            //debugger;
-            if ((ws.response.type === 'cardsSent' || ws.response.type === 'cardsReceived')
-                    && ws.response.cards && ws.response.cards.length) {
-               // $scope.cardsInGame = ws.response.cards;
-                $scope.$apply(function(){
-                    $scope.cards = $scope.cards.concat(ws.response.cards);                   
-               });
-            }
+            $scope.$apply(function () {
+                if ((ws.response.type === 'cardsSent' || ws.response.type === 'cardsReceived')
+                        && ws.response.cards && ws.response.cards.length) {
+                    // $scope.cardsInGame = ws.response.cards;
+                    $scope.cards = $scope.cards.concat(ws.response.cards);
+                }
+                else if (ws.response.type === 'check') {
+                    var len = ws.response.cards.length;
+                    $scope.cards.splice($scope.cards.length - len, len);
+                    $scope.cards = $scope.cards.concat(ws.response.cards);
+                    $scope.clearField();
+                }
+                else if (ws.response.type === 'checkyou') {
+                    $scope.clearField();
+                }
+            });
         });
     });
     
-    bnb.controller('gameController', function($scope, $interval, CardHandler, $modal){
+    bnb.controller('gameController', function($scope, CardHandler){
         $scope.buffer = [];
         $scope.cards = [];
-        $scope.notBelieveFlag = false;
+        $scope.yourStep = false;
+        $scope.youFirst = false;
+        $scope.userPromises = '';
         $scope.cardTypes = [        
             'ace',
             'king',
@@ -52,28 +67,50 @@
             'three',
             'two'
         ];
-        $scope.providedCards = $scope.cardTypes[1];
-                
-        ws.registerObserver('message', function(){
-            var modalInstance;
-            if (ws.response.type === 'init') {
-                $scope.$apply(function(){
-                    $scope.cards = ws.response.cards; 
-                    $modal.close(modalInstance || modalInstance.result);
+        $scope.promisedCards = $scope.cardTypes[1];
+        $scope.selectWinner = function(playerId) {
+            debugger;
+            var getAllCards = [];
+            var playerNames = ['You', 'Opponent'];
+            if (ws.response.cardsontable) {
+                angular.forEach(ws.response.cardsontable, function(data, key){
+                    getAllCards = getAllCards.concat(data.cards);
                 });
+                if (playerId === 1) {
+                    $scope.userPromises = playerNames[playerId] + ": checking you! You lose!\n";
+                    $scope.cards = $scope.cards.concat(getAllCards);
+                }
             }
-            else if (ws.response.type === 'cardsReceived') {
-                $scope.notBelieveFlag = true;
+            else {
+                $scope.userPromises = playerNames[playerId] + ": checking you! You win!\n";
+                $scope.youFirst = true;
             }
-            else if (ws.response.type === 'waiting') {
-                alert('waiting for another client');
-                    /*var modalInstance = $modal.open({
-                        templateUrl: 'tpl/waiting.html',
-                        size: 'lg',
-                        backdrop : false,
-                        windowTemplateUrl : 'tpl/window.html'
-                    });*/
-            }
+            
+        };
+        
+        ws.registerObserver('message', function(){
+            $scope.$apply(function(){
+                if (ws.response.type === 'init') {
+                        $scope.cards = ws.response.cards; 
+                }
+                else if (ws.response.type === 'cardsReceived') {
+                    $scope.yourStep = true;
+                    $scope.userPromises += "Opponent: " + ws.response.cards.length +" "+ ws.response.promise + "\n";
+                    $scope.promisedCards = ws.response.promise;
+                }
+                else if (ws.response.type === 'waiting') {
+                    $scope.youFirst = true;
+                    alert('waiting for another client');
+                }
+
+                else if (ws.response.type === 'checkyou') {
+                    //$scope.userPromises += "Opponent: checking you! \n";
+                    $scope.selectWinner(1);
+                }   
+                else if (ws.response.type === 'check'){
+                    $scope.selectWinner(0);
+                }
+            });
         });
         
         $scope.clearBuffer = function() {
@@ -88,36 +125,42 @@
             var cHandler = new CardHandler($scope.cards),
                 cardsForSending = {
                     'cards' : [],
-                    'type' : 'cardsSent'
+                    'type' : 'cardsSent',
+                    'promise' : $scope.promisedCards
                 };
+            $scope.userPromises += "You: " + $scope.buffer.length +" "+ $scope.promisedCards + "\n";
             /*send them via websockets*/
             /*then delete*/
             angular.forEach($scope.buffer, function(card, key){              
                 cardsForSending.cards.push(cHandler.deleteCard(card.id));
             });
             $scope.clearBuffer();
+            $scope.yourStep = false;
+            $scope.youFirst = false;
             ws.send(cardsForSending);
-        }
+        };
+        
+        $scope.dontBelieve = function() {
+            //debugger;
+            ws.send({
+                type : 'check',
+                'name' : $scope.promisedCards
+            });
+        };
                 
         $scope.setToBuffer = function(card) {
            var buflen = 0;
            buflen = $scope.buffer.push(card) - 1;
-           /*$scope.$apply(function(){
-               buflen = $scope.buffer.push(card) - 1;
-           });*/
            card.inBuffer = true;
            return buflen;
-        }
+        };
         
         $scope.deleteFromBuffer = function(card) {
             var bufferHandler = new CardHandler($scope.buffer);
             var pos = bufferHandler.getPos(card.id);
             card.inBuffer = false;
             $scope.buffer.splice(pos, 1);
-            /*$scope.$apply(function(){
-                $scope.buffer.splice(pos, 1);
-            });*/
-        }
+        };
         
         $scope.choose = function(id) {
             var cHandler = new CardHandler($scope.cards);
@@ -135,7 +178,7 @@
             else {
                 $scope.deleteFromBuffer(card);             
             }
-        }
+        };
     });
    
     bnb.factory('CardHandler', function () {

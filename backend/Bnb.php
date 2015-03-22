@@ -11,7 +11,7 @@ class Bnb implements MessageComponentInterface {
     
     protected $cards;
     
-    protected static $lastMessage;
+    protected static $cardsOnTable = [];
 
     public function __construct() {
         $this->clients = new \SplObjectStorage;
@@ -51,12 +51,19 @@ class Bnb implements MessageComponentInterface {
         switch($msgData['type']) {
             case 'cardsSent' : {
                 $clientResponse = static::encodedCards($msgData);
-                static::$lastMessage = $selfResponse = $msgData;
+                static::$cardsOnTable[] = $selfResponse = $msgData;
                 break;
             }
             case 'check' : {
-                $selfResponse = static::$lastMessage;
-                $clientResponse = $msgData;
+                $selfResponse = end(static::$cardsOnTable);
+                $selfResponse['type'] = 'check';
+                $clientResponse = ['type' => 'checkyou'];               
+                if ($cards = $this->check($msgData['name'])) {
+                   $selfResponse['cardsontable'] = static::$cardsOnTable; 
+                }
+                else {
+                    $clientResponse['cardsontable'] = static::$cardsOnTable;
+                }
                 break;
             }
             default : break;
@@ -96,6 +103,15 @@ class Bnb implements MessageComponentInterface {
         $data = [];
         try {
             $data = json_decode($msg, TRUE);
+            if (isset($data['cards'])) {
+                $data['cards'] = array_map(function($el){                
+                    if (isset($el['inBuffer'])) {
+                       $el['inBuffer'] = false; 
+                    }
+                    return $el;
+                },$data['cards']);
+            }
+            //print_r($data);
             if (!isset($data['type'])) {
                 $data['type'] = '';
                 throw new \Exception("wrong message format {$msg}");
@@ -123,5 +139,17 @@ class Bnb implements MessageComponentInterface {
             'type' => 'waiting'
         ];
         return json_encode($data);
+    }
+    
+    protected function check($name) {
+        $cards = end(static::$cardsOnTable)['cards'];
+        foreach ($cards as $card) {
+            print_r($card);
+            if ($card['name'] !== $name) {
+                return false;
+            }
+        }
+            
+        return true;
     }
 }

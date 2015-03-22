@@ -2,12 +2,15 @@
   <div class="container">
       <br />
       <fieldset>
-          <select ng-model="providedCards" ng-options="o as o for o in cardTypes" class="form-control"></select>
+          <select ng-model="promisedCards" ng-options="o as o for o in cardTypes" class="form-control" ng-change="choosePromised()" ng-disabled="!youFirst"></select>
           <br />
       <span>Cards number: {{buffer.length}}</span>
       </fieldset>
       <br />
-      <button class="btn btn-default" ng-click="send()" style="top:150px;" ng-disabled="!buffer.length">Add selected</button>
-      <button class="btn btn-danger" style="bottom:50px;" ng-disabled="!notBelieveFlag">I don`t believe you!</button>
+      <button class="btn btn-default" ng-click="send()" 
+              style="top:150px;" ng-disabled="!buffer.length || (!yourStep && !youFirst)">Add selected</button>
+      
+      <button class="btn btn-danger" style="bottom:50px;" 
+              ng-disabled="!yourStep || youFirst" ng-click="dontBelieve()">I don`t believe you!</button>
   </div>
 </nav>

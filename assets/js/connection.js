@@ -13,7 +13,7 @@ function Connection(host, port) {
 
         conn.onmessage = function (e) {
             try {
-                debugger;
+                //debugger;
                 scope.response = JSON.parse(e.data);
                 scope.exec.call(scope, 'message', scope.response);
             }
@@ -25,7 +25,7 @@ function Connection(host, port) {
 
             }
         };
-        conn.onerror = function(error) {
+        conn.onerror = function() {
             var msg = 'Seems we get some problems with socket server. Try to reboot';
             alert(msg);
             throw new Error(msg);
