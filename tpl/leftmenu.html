@@ -9,7 +9,11 @@
       <br />
       <button class="btn btn-default" ng-click="send()" 
               style="top:150px;" ng-disabled="!buffer.length || (!yourStep && !youFirst)">Add selected</button>
-      
+              
+      <button class="btn btn-default" ng-click="dropTheQuartet()" 
+              style="top:150px;">Drop the Quartet</button>
+
+              
       <button class="btn btn-danger" style="bottom:50px;" 
               ng-disabled="!yourStep || youFirst" ng-click="dontBelieve()">I don`t believe you!</button>
   </div>

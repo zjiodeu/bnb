@@ -8,11 +8,9 @@
     bnb.controller('enemyController', function($scope){
         $scope.cards = getEnemyCards(26);
         $scope.checkCards = function() {
-            debugger;
             var cardsCount = 0;
             if (!ws.response.lost) {
                 angular.forEach(ws.response.cardsontable, function(data, key){
-                    debugger;
                     cardsCount += data.cards.length;
                 });
                 $scope.cards = $scope.cards.concat(getEnemyCards(cardsCount));
@@ -21,7 +19,6 @@
         ws.registerObserver('message', function(){
             $scope.$apply(function () {
                 if (ws.response.type === 'cardsReceived' && ws.response.cards && ws.response.cards.length) {
-                    // $scope.cardsInGame = ws.response.cards;
                     var len = ws.response.cards.length;
                     $scope.cards.splice($scope.cards.length - len, len);
                 }
@@ -87,15 +84,21 @@
                 angular.forEach(ws.response.cardsontable, function(data, key){
                     getAllCards = getAllCards.concat(data.cards);
                 });
-                $scope.userPromises = "You have lost!\n";
+                $scope.userPromises += "You have lost!\n";
                 $scope.cards = $scope.cards.concat(getAllCards);
             }
             else {
-                $scope.userPromises = "You have won!\n";
+                $scope.userPromises += "You have won!\n";
                 $scope.youFirst = true;
             }
             
         };
+        
+        $scope.dropTheQuartet = function() {
+            angular.forEach($scope.cardTypes, function(name, key){
+                
+            });
+        }
         
         ws.registerObserver('message', function(){
             $scope.$apply(function(){
@@ -189,9 +192,6 @@
     bnb.factory('CardHandler', function () {
         return function(cardSet) {    
             this.getPos = function(id) {
-                if (!(this.cardSet && this.cardSet.length)) {
-                    throw new Error('Undefined or empty context');
-                }
                 for (var i = 0; i < this.cardSet.length; ++i) {
                     if (this.cardSet[i].id === id) {
                         return i;
@@ -211,7 +211,7 @@
                 return (this.cardSet[pos]) ? this.cardSet.splice(pos, 1)[0]: false;
             }
             
-            this.cardSet = cardSet;
+            this.cardSet = cardSet || [];
     }
 });
 

@@ -1,9 +1,9 @@
 body {background: #408447}
 .desk {
-    max-height:420px;
+    max-height:560px;
     border : 1px solid white;
     position: fixed;
-    left:10%;
+    left:180px;
     right:10%;
     display:inline-block;
 }

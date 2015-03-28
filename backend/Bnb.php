@@ -51,7 +51,8 @@ class Bnb implements MessageComponentInterface {
         switch($msgData['type']) {
             case 'cardsSent' : {
                 $clientResponse = static::encodedCards($msgData);
-                static::$cardsOnTable[] = $selfResponse = $msgData;
+                $selfResponse = $msgData;
+                $this->setCardsMessage($msgData);
                 break;
             }
             case 'check' : {
@@ -65,6 +66,7 @@ class Bnb implements MessageComponentInterface {
                 else {
                    $clientResponse['lost'] = true;
                 }
+                static::$cardsOnTable = [];
                 break;
             }
             default : break;
@@ -106,9 +108,7 @@ class Bnb implements MessageComponentInterface {
             $data = json_decode($msg, TRUE);
             if (isset($data['cards'])) {
                 $data['cards'] = array_map(function($el){                
-                    if (isset($el['inBuffer'])) {
-                       $el['inBuffer'] = false; 
-                    }
+                    $el['inBuffer'] = $el['active'] = false; 
                     return $el;
                 },$data['cards']);
             }
@@ -145,7 +145,7 @@ class Bnb implements MessageComponentInterface {
     protected function check($name) {
         $cards = end(static::$cardsOnTable)['cards'];
         foreach ($cards as $card) {
-            print_r($card);
+            //print_r($card);
             if ($card['name'] !== $name) {
                 return false;
             }
@@ -153,4 +153,22 @@ class Bnb implements MessageComponentInterface {
             
         return true;
     }
+    
+    public function setCardsMessage(array $msgObject) {
+        $cards = [];
+        foreach (static::$cardsOnTable as $set) {
+            if (isset($set['cards'])) {
+                $cards = array_merge($cards, $set['cards']);
+            }
+        }
+        print_r(static::$cardsOnTable);
+        print_r($cards);
+        foreach ($msgObject['cards'] as $key => &$card) {
+            if (in_array($card, $cards)) {
+                unset($msgObject['cards'][$key]);
+            }
+        }
+        static::$cardsOnTable[] = $msgObject;
+    }
+
 }
