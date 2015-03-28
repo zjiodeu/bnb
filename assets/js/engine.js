@@ -25,6 +25,9 @@
                 else if (ws.response.type === 'checkyou' || ws.response.type === 'check'){
                     $scope.checkCards();
                 }
+                else if (ws.response.type === 'drop' && ws.response.count) {
+                    $scope.cards.splice($scope.cards.length - ws.response.count, ws.response.count);
+                }
             });
         });
     });
@@ -95,9 +98,32 @@
         };
         
         $scope.dropTheQuartet = function() {
-            angular.forEach($scope.cardTypes, function(name, key){
-                
+            debugger;
+            var total = {},
+                cHandler = new CardHandler($scope.cards),
+                dropCount = 0;
+            $scope.cardTypes.forEach(function(name) {
+                if (typeof total[name] === 'undefined') {
+                    total[name] = [];
+                }
+                $scope.cards.forEach(function(card) {
+                    if (card.name === name) {
+                        total[name].push(card);                 
+                    }
+                });
+                if (total[name].length === 4) {
+                   dropCount +=4;
+                   for (var i = 0; i < 4; ++i) {
+                       cHandler.deleteCard(total[name][i].id);
+                   }
+                }
             });
+            if (dropCount) {
+                ws.send({
+                    'type' : 'drop',
+                    'count' : dropCount
+                });
+            }
         }
         
         ws.registerObserver('message', function(){

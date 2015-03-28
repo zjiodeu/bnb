@@ -69,6 +69,10 @@ class Bnb implements MessageComponentInterface {
                 static::$cardsOnTable = [];
                 break;
             }
+            case 'drop' : {
+                $clientResponse = $msgData;
+                break;
+            }
             default : break;
         }
         foreach ($this->clients as $client) {            
