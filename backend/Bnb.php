@@ -57,12 +57,13 @@ class Bnb implements MessageComponentInterface {
             case 'check' : {
                 $selfResponse = end(static::$cardsOnTable);
                 $selfResponse['type'] = 'check';
-                $clientResponse = ['type' => 'checkyou'];               
-                if ($cards = $this->check($msgData['name'])) {
-                   $selfResponse['cardsontable'] = static::$cardsOnTable; 
+                $clientResponse = ['type' => 'checkyou'];   
+                $selfResponse['cardsontable'] = $clientResponse['cardsontable'] = static::$cardsOnTable;
+                if ($this->check($msgData['name'])) {
+                   $selfResponse['lost'] = true; 
                 }
                 else {
-                    $clientResponse['cardsontable'] = static::$cardsOnTable;
+                   $clientResponse['lost'] = true;
                 }
                 break;
             }

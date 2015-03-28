@@ -6,16 +6,29 @@
         ws = new WS(HOST, PORT);
         
     bnb.controller('enemyController', function($scope){
-        $scope.cards = getEnemyCards();
+        $scope.cards = getEnemyCards(26);
+        $scope.checkCards = function() {
+            debugger;
+            var cardsCount = 0;
+            if (!ws.response.lost) {
+                angular.forEach(ws.response.cardsontable, function(data, key){
+                    debugger;
+                    cardsCount += data.cards.length;
+                });
+                $scope.cards = $scope.cards.concat(getEnemyCards(cardsCount));
+            }      
+        };
         ws.registerObserver('message', function(){
-            //debugger;
-            if (ws.response.type === 'cardsReceived' && ws.response.cards && ws.response.cards.length) {
-               // $scope.cardsInGame = ws.response.cards;
-                $scope.$apply(function(){
-                    var len = ws.response.cards.length;                   
-                    $scope.cards.splice($scope.cards.length - len, len);                   
-               });
-            }
+            $scope.$apply(function () {
+                if (ws.response.type === 'cardsReceived' && ws.response.cards && ws.response.cards.length) {
+                    // $scope.cardsInGame = ws.response.cards;
+                    var len = ws.response.cards.length;
+                    $scope.cards.splice($scope.cards.length - len, len);
+                }
+                else if (ws.response.type === 'checkyou' || ws.response.type === 'check'){
+                    $scope.checkCards();
+                }
+            });
         });
     });
     
@@ -68,21 +81,17 @@
             'two'
         ];
         $scope.promisedCards = $scope.cardTypes[1];
-        $scope.selectWinner = function(playerId) {
-            debugger;
+        $scope.checkCards = function() {
             var getAllCards = [];
-            var playerNames = ['You', 'Opponent'];
-            if (ws.response.cardsontable) {
+            if (ws.response.lost) {
                 angular.forEach(ws.response.cardsontable, function(data, key){
                     getAllCards = getAllCards.concat(data.cards);
                 });
-                if (playerId === 1) {
-                    $scope.userPromises = playerNames[playerId] + ": checking you! You lose!\n";
-                    $scope.cards = $scope.cards.concat(getAllCards);
-                }
+                $scope.userPromises = "You have lost!\n";
+                $scope.cards = $scope.cards.concat(getAllCards);
             }
             else {
-                $scope.userPromises = playerNames[playerId] + ": checking you! You win!\n";
+                $scope.userPromises = "You have won!\n";
                 $scope.youFirst = true;
             }
             
@@ -103,12 +112,8 @@
                     alert('waiting for another client');
                 }
 
-                else if (ws.response.type === 'checkyou') {
-                    //$scope.userPromises += "Opponent: checking you! \n";
-                    $scope.selectWinner(1);
-                }   
-                else if (ws.response.type === 'check'){
-                    $scope.selectWinner(0);
+                else if (ws.response.type === 'checkyou' || ws.response.type === 'check'){
+                    $scope.checkCards();
                 }
             });
         });
@@ -210,8 +215,7 @@
     }
 });
 
-    function getEnemyCards() {
-        var count = 26;
+    function getEnemyCards(count) {
         var set = [];
         while(count--) {
             set.push({
