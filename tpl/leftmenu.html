@@ -2,7 +2,9 @@
   <div class="container">
       <br />
       <fieldset>
-          <select ng-model="promisedCards" ng-options="o as o for o in cardTypes" class="form-control" ng-change="choosePromised()" ng-disabled="!youFirst"></select>
+          <select class="form-control"  ng-disabled="!youFirst" ng-model="promisedCards" ng-init="promisedCards = cardTypes[0].card">
+              <option ng-repeat="opt in cardTypes" ng-disabled="opt.disabled" value="{{opt.card}}">{{opt.card}}</option>
+          </select>
           <br />
       <span>Cards number: {{buffer.length}}</span>
       </fieldset>
@@ -11,7 +13,7 @@
               style="top:150px;" ng-disabled="!buffer.length || (!yourStep && !youFirst)">Add selected</button>
               
       <button class="btn btn-default" ng-click="dropTheQuartet()" 
-              style="top:150px;">Drop the Quartet</button>
+              style="top:300px;">Drop the Quartet</button>
 
               
       <button class="btn btn-danger" style="bottom:50px;" 

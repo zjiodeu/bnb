@@ -51,15 +51,14 @@ class Bnb implements MessageComponentInterface {
         switch($msgData['type']) {
             case 'cardsSent' : {
                 $clientResponse = static::encodedCards($msgData);
-                $selfResponse = $msgData;
-                $this->setCardsMessage($msgData);
+                static::$cardsOnTable[] = $selfResponse = $msgData;
                 break;
             }
             case 'check' : {
                 $selfResponse = end(static::$cardsOnTable);
                 $selfResponse['type'] = 'check';
                 $clientResponse = ['type' => 'checkyou'];   
-                $selfResponse['cardsontable'] = $clientResponse['cardsontable'] = static::$cardsOnTable;
+                $selfResponse['cardsontable'] = $clientResponse['cardsontable'] = $this->getUniqCards(static::$cardsOnTable);
                 if ($this->check($msgData['name'])) {
                    $selfResponse['lost'] = true; 
                 }
@@ -158,21 +157,21 @@ class Bnb implements MessageComponentInterface {
         return true;
     }
     
-    public function setCardsMessage(array $msgObject) {
-        $cards = [];
-        foreach (static::$cardsOnTable as $set) {
-            if (isset($set['cards'])) {
-                $cards = array_merge($cards, $set['cards']);
+    public function getUniqCards() {
+        $cardsOnTable = static::$cardsOnTable;
+        $buffer = [];
+        foreach ($cardsOnTable as &$set) {
+            foreach ($set['cards'] as $key => &$card) {
+                if (in_array($card, $buffer)) {
+                    unset($set['cards'][$key]);
+                }
+                else {
+                    $buffer[] = $card;
+                }
             }
         }
-        print_r(static::$cardsOnTable);
-        print_r($cards);
-        foreach ($msgObject['cards'] as $key => &$card) {
-            if (in_array($card, $cards)) {
-                unset($msgObject['cards'][$key]);
-            }
-        }
-        static::$cardsOnTable[] = $msgObject;
+        print_r($cardsOnTable);
+        return $cardsOnTable;
     }
 
 }

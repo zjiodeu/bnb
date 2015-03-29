@@ -66,21 +66,21 @@
         $scope.youFirst = false;
         $scope.userPromises = '';
         $scope.cardTypes = [        
-            'ace',
-            'king',
-            'queen',
-            'wallet',
-            'ten',
-            'nine',
-            'eight',
-            'seven',
-            'six',
-            'five',
-            'four',
-            'three',
-            'two'
+            {'card' : 'ace', 'disabled' : false},
+            {'card' : 'king','disabled' : false},
+            {'card' : 'queen','disabled' : false},
+            {'card' : 'wallet','disabled' : false},
+            {'card' : 'ten','disabled' : false},
+            {'card' : 'nine','disabled' : false},
+            {'card' : 'eight','disabled' : false},
+            {'card' : 'seven','disabled' : false},
+            {'card' : 'six','disabled' : false},
+            {'card' : 'five','disabled' : false},
+            {'card' : 'four','disabled' : false},
+            {'card' : 'three','disabled' : false},
+            {'card' : 'two', 'disabled' : false}
         ];
-        $scope.promisedCards = $scope.cardTypes[1];
+        //$scope.promisedCards = $scope.cardTypes[1].card;
         $scope.checkCards = function() {
             var getAllCards = [];
             if (ws.response.lost) {
@@ -97,43 +97,51 @@
             
         };
         
-        $scope.dropTheQuartet = function() {
-            debugger;
+        $scope.dropTheQuartet = function () {
             var total = {},
-                cHandler = new CardHandler($scope.cards),
-                dropCount = 0;
-            $scope.cardTypes.forEach(function(name) {
-                if (typeof total[name] === 'undefined') {
-                    total[name] = [];
+                    cHandler = new CardHandler($scope.cards),
+                    dropCount = 0,
+                    dropped = [];
+            $scope.cardTypes.forEach(function (cardType) {
+                if (typeof total[cardType.card] === 'undefined') {
+                    total[cardType.card] = [];
                 }
-                $scope.cards.forEach(function(card) {
-                    if (card.name === name) {
-                        total[name].push(card);                 
+                $scope.cards.forEach(function (card) {
+                    if (card.name === cardType.card) {
+                        total[cardType.card].push(card);
                     }
                 });
-                if (total[name].length === 4) {
-                   dropCount +=4;
-                   for (var i = 0; i < 4; ++i) {
-                       cHandler.deleteCard(total[name][i].id);
-                   }
+                if (total[cardType.card].length === 4) {
+                    dropCount += 4;
+                    dropped.push(cardType.card);
+                    for (var i = 0; i < 4; ++i) {
+                        cHandler.deleteCard(total[cardType.card][i].id);
+                    }
+                    for (var i = 0; i < $scope.cardTypes.length; ++i) {
+                        if ($scope.cardTypes[i].card === cardType.card) {
+                            $scope.cardTypes[i].disabled = true;
+                        }
+                    }
                 }
             });
             if (dropCount) {
+                $scope.userPromises += "You have dropped: " + dropped.toString() + '\n';
                 ws.send({
-                    'type' : 'drop',
-                    'count' : dropCount
+                    'type': 'drop',
+                    'count': dropCount,
+                    'dropped' : dropped
                 });
             }
         }
         
-        ws.registerObserver('message', function(){
-            $scope.$apply(function(){
+        ws.registerObserver('message', function () {
+            $scope.$apply(function () {
                 if (ws.response.type === 'init') {
-                        $scope.cards = ws.response.cards; 
+                    $scope.cards = ws.response.cards;
                 }
                 else if (ws.response.type === 'cardsReceived') {
                     $scope.yourStep = true;
-                    $scope.userPromises += "Opponent: " + ws.response.cards.length +" "+ ws.response.promise + "\n";
+                    $scope.userPromises += "Opponent: " + ws.response.cards.length + " " + ws.response.promise + "\n";
                     $scope.promisedCards = ws.response.promise;
                 }
                 else if (ws.response.type === 'waiting') {
@@ -141,8 +149,18 @@
                     alert('waiting for another client');
                 }
 
-                else if (ws.response.type === 'checkyou' || ws.response.type === 'check'){
+                else if (ws.response.type === 'checkyou' || ws.response.type === 'check') {
                     $scope.checkCards();
+                }
+                else if (ws.response.type === 'drop' && ws.response.dropped) {
+                    for (var i = 0; i < ws.response.dropped.length; ++i) {
+                        for (var j = 0; j < $scope.cardTypes.length; ++j) {
+                            if ($scope.cardTypes[j].card === ws.response.dropped[i]) {
+                                $scope.cardTypes[j].disabled = true;
+                            }
+                        }
+                    }
+                    $scope.userPromises += "Opponent has dropped: " + ws.response.dropped.toString() + '\n';
                 }
             });
         });
@@ -172,6 +190,9 @@
             $scope.yourStep = false;
             $scope.youFirst = false;
             ws.send(cardsForSending);
+            if (!$scope.cards.length) {
+                document.write('YOU ARE THE CHAMPION');
+            }
         };
         
         $scope.dontBelieve = function() {
@@ -253,4 +274,4 @@
         }
         return set;
     }
-})($, 'localhost', 12345);
+})($, '192.168.0.103', 12345);
