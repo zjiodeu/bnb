@@ -1,8 +1,13 @@
+<?php require('./config.php'); ?>
 <html ng-app="bnb">
   <head>
     <title>Believe or not believe</title>
     <link rel="stylesheet" type="text/css" href="node_modules/bootstrap/dist/css/bootstrap.css"/>
     <link rel="stylesheet" type="text/css" href="assets/css/styles.css"/>
+    <script>
+        window.SERVER_IP = '<?=SERVER_IP;?>';
+        window.SERVER_PORT = '<?=SERVER_PORT;?>';
+    </script>
     <script src="node_modules/angular/angular.min.js"></script>
     <script src="node_modules/bootstrap-gh-pages/ui-bootstrap-0.12.1.min.js"></script>
     <script src="node_modules/jquery/dist/jquery.min.js"></script>

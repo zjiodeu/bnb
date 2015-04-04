@@ -275,4 +275,4 @@
         }
         return set;
     }
-})($, '192.168.0.103', 12345);
+})($, SERVER_IP, SERVER_PORT);

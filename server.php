@@ -3,8 +3,10 @@ use Ratchet\Server\IoServer;
 use Ratchet\Http\HttpServer;
 use Ratchet\WebSocket\WsServer;
 use backend\Bnb;
+define ('PROJECT_PATH', realpath(__DIR__));
 
-    require realpath(__DIR__) . '/vendor/autoload.php';
+require PROJECT_PATH . '/vendor/autoload.php';
+require PROJECT_PATH . '/config.php';
 
     $server = IoServer::factory(
         new HttpServer(
@@ -12,7 +14,7 @@ use backend\Bnb;
                 new Bnb()
             )
         ),
-        12345
+        SERVER_PORT
     );
 
     $server->run();
