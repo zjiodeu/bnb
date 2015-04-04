@@ -89,6 +89,7 @@
                 });
                 $scope.userPromises += "You have lost!\n";
                 $scope.cards = $scope.cards.concat(getAllCards);
+                $scope.yourStep = false;
             }
             else {
                 $scope.userPromises += "You have won!\n";
